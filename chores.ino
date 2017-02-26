@@ -32,8 +32,12 @@ bool browseCol(state_t &s){
 
 void editCol(state_t &s){
   // set player LED colour
-  bool change = false;
+  bool change = true;
   while(!getSelect()){
+    if(change){
+      updateLEDs(s);
+      change = false;
+    }
     if(getRight() && s.ledCol[0][s.bPos] < 5){
       s.ledCol[0][s.bPos]++;
       change = true;
@@ -41,10 +45,6 @@ void editCol(state_t &s){
     if(getLeft() && s.ledCol[0][s.bPos] > 0){
       s.ledCol[0][s.bPos]--;
       change = true;
-    }
-    if(change){
-      updateLEDs(s);
-      change = false;
     }
   }
 }

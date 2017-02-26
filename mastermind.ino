@@ -82,13 +82,17 @@ void loop(){
 }
 
 void gameLoop(state_t &s){
-  bool change = false;
+  bool change = true;
   while(s.mode != restart){
     switch(s.mode){
     case edit:
       Serial.println("mode: edit");
       while(!s.modeSwitch){
-        change = browseCol(s);
+        if(change){
+          updateLEDs(s);
+          change = false;
+        }        
+        change = browseCol(s);        
         if(getSelect()){
           if(s.bPos == 4){
             s.modeSwitch = true;
@@ -96,16 +100,21 @@ void gameLoop(state_t &s){
             editCol(s);
           }
         }
-        updateLEDs(s);
       }
       s.mode = browse;
       s.modeSwitch = false;
       break;
     case browse:
       Serial.println("mode: browse");
+      while(!s.modeSwitch){
+        // do stuff
+      }
       break;
     case commit:
       Serial.println("mode: commit");
+      while(!s.modeSwitch){
+        // do stuff
+      }
       break;      
     }
     if(s.tries == 0xF){
