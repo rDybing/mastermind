@@ -11,20 +11,38 @@
 
 #include <Bounce2.h>
 
-const byte CC = 4;
-
 const byte srData = 11;
 const byte srLatch = 12;
 const byte srClock = 13;
-const byte srCC[CC] = {2, 3, 4, 5};
-const byte bPinSel = 6;
+const byte srCC[4] = {2, 3, 4, 5};
+const byte bPinSel = 8;
 const byte bPinLft = 7;
-const byte bPinRgt = 8;
+const byte bPinRgt = 6;
+
+enum modeSel {edit, browse, commit, restart};
+
+
+byte ledColours[6]{
+  1, // red
+  2, // green
+  3, // yellow
+  4, // blue  
+  5, // magenta
+  6  // cyan
+};
 
 typedef struct timer_t{
   uint32_t oldTime;
   uint32_t newTime;
   uint32_t intervalMS;
+};
+
+typedef struct state_t{
+  byte tries;
+  modeSel mode;
+  byte bPos;
+  byte ledCol[2][4];
+  bool modeSwitch;
 };
 
 Bounce bSel = Bounce();
@@ -36,7 +54,7 @@ void setup(){
   pinMode(srData, OUTPUT);
   pinMode(srLatch, OUTPUT);
   pinMode(srClock, OUTPUT);
-  for(int i = 0; i < CC; i++){
+  for(int i = 0; i < 4; i++){
     pinMode(srCC[i], OUTPUT);
   }
   pinMode(bPinSel,  INPUT_PULLUP);
@@ -50,7 +68,49 @@ void setup(){
 }
 
 void loop(){
-/* contrary to popular paradigm, this will not
- * be allowed to loop, as I am going more
- * structured in my approach to this project.*/
+  
+  timer_t timer;
+  state_t state;
+  initialize(timer);
+  resetState(state);
+  
+  while(true){
+    resetState(state);
+    resetLEDs(state);
+    gameLoop(state);
+  }
 }
+
+void gameLoop(state_t &s){
+  while(s.mode != restart){
+    switch(s.mode){
+    case edit:
+      Serial.println("mode: edit");
+      while(!s.modeSwitch){
+        browseCol(s);
+        if(getSelect()){
+          if(s.bPos == 4){
+            s.modeSwitch = true;
+          } else {
+            editCol(s);
+          }
+        }
+        updateLEDs(s);
+      }
+      s.mode = browse;
+      s.modeSwitch = false;
+      break;
+    case browse:
+      Serial.println("mode: browse");
+      break;
+    case commit:
+      Serial.println("mode: commit");
+      break;      
+    }
+    if(s.tries == 0xF){
+      endGameLose();
+      s.mode = restart;
+    }
+  }
+}
+
