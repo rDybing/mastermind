@@ -21,7 +21,6 @@ const byte bPinRgt = 6;
 
 enum modeSel {edit, browse, commit, restart};
 
-
 byte ledColours[6]{
   1, // red
   2, // green
