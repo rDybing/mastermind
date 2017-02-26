@@ -82,12 +82,13 @@ void loop(){
 }
 
 void gameLoop(state_t &s){
+  bool change = false;
   while(s.mode != restart){
     switch(s.mode){
     case edit:
       Serial.println("mode: edit");
       while(!s.modeSwitch){
-        browseCol(s);
+        change = browseCol(s);
         if(getSelect()){
           if(s.bPos == 4){
             s.modeSwitch = true;
