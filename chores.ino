@@ -1,24 +1,26 @@
-void initialize(timer_t &t){
+void initialize(timer_t &t){  
   t.oldTime = millis();
   t.newTime = t.oldTime;
   t.intervalMS = 1000;
 }
 
-void resetState(state_t &s){
+void resetState(state_t &s){  
   s.tries = 0;
   s.mode = edit;
   s.bPos = 0;
   s.modeSwitch = false;
 }
 
-void resetLEDs(state_t &s){
-  for(int i = 0; i < 4; i++){
-    s.ledCol[0][i] = 0;
-    s.ledCol[1][i] = 0;
+void resetLEDs(ledOut_t *h){  
+  for(int x = 0; x < 0xF; x++){
+    for(int i = 0; i < 4; i++){
+      h[x].resLeds[i] = 0;
+      h[x].plaLeds[i] = 0;
+    }
   }
 }
 
-bool browseCol(state_t &s){
+bool browseColumn(state_t &s){  
   if(getRight() && s.bPos < 4){
     s.bPos++;
     return true;        
@@ -30,23 +32,33 @@ bool browseCol(state_t &s){
   return false;
 }
 
-void editCol(state_t &s){
-  // set player LED colour
+void editColor(state_t &s, ledOut_t *edit){
   bool change = true;
+  
   while(!getSelect()){
     if(change){
-      updateLEDs(s);
+      updateLEDs(s, edit);
       change = false;
     }
-    if(getRight() && s.ledCol[0][s.bPos] < 5){
-      s.ledCol[0][s.bPos]++;
+    if(getRight() && edit[s.tries].plaLeds[s.bPos] < 5){
+      edit[s.tries].plaLeds[s.bPos]++;
       change = true;
     }
-    if(getLeft() && s.ledCol[0][s.bPos] > 0){
-      s.ledCol[0][s.bPos]--;
+    if(getLeft() && edit[s.tries].plaLeds[s.bPos] > 0){
+      edit[s.tries].plaLeds[s.bPos]--;
       change = true;
     }
   }
+}
+
+void newTry(byte pos, ledOut_t *h){
+  for(byte i = 0; i < 4; i++){
+    h[pos].plaLeds[i] = h[pos - 1].plaLeds[i]; 
+  }
+}
+
+void popHistory(){
+  // read from history
 }
 
 void endGameWin(){

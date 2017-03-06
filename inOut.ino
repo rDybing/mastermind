@@ -1,5 +1,5 @@
 // get if button have been pressed
-bool getSelect(){
+bool getSelect(){  
   if(bSel.update() && bSel.read() == LOW){    
     return true;
   } else {
@@ -7,7 +7,7 @@ bool getSelect(){
   }
 }
 
-bool getLeft(){
+bool getLeft(){  
   if(bLft.update() && bLft.read() == LOW){    
     return true;
   } else {
@@ -23,11 +23,17 @@ bool getRight(){
   }
 }
 
-void updateLEDs(state_t &s){
-  // temp until LEDs are hooked up
-  byte strSize = 120;
-  char strOut[strSize];
-  snprintf(strOut, strSize, "bPos: %d || ledCol - 0: %d 1:%d 2: %d 3: %d\n", s.bPos, s.ledCol[0][0], s.ledCol[0][1], s.ledCol[0][2], s.ledCol[0][3]);
-  Serial.print(strOut);  
+void updateLEDs(state_t &s, ledOut_t *out){  
+  byte strSize = 60;
+  char strPlayerOut[strSize];
+  char strResultOut[strSize];
+  byte t = s.hPos;
+
+  snprintf(strResultOut, strSize, "Result: Try: %02d * ledCol[1] - %d *  %d *  %d *  %d\n", 
+    t, out[t].resLeds[0], out[t].resLeds[1], out[t].resLeds[2], out[t].resLeds[3]); 
+  snprintf(strPlayerOut, strSize, "Player: bPos: %d * ledCol[0] - %d *  %d *  %d *  %d\n", 
+    s.bPos, out[t].plaLeds[0], out[t].plaLeds[1], out[t].plaLeds[2], out[t].plaLeds[3]);
+  Serial.print(strResultOut);
+  Serial.print(strPlayerOut);  
 }
 

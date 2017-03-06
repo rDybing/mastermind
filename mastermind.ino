@@ -21,13 +21,28 @@ const byte bPinRgt = 6;
 
 enum modeSel {edit, browse, commit, restart};
 
-byte ledColours[6]{
-  1, // red
-  2, // green
-  3, // yellow
-  4, // blue  
-  5, // magenta
-  6  // cyan
+
+byte ledColors[6]{
+  B00000001, // red
+  B00000010, // green
+  B00000011, // yellow
+  B00000100, // blue  
+  B00000101, // magenta
+  B00000110  // cyan
+};
+
+typedef struct ledByte_t{
+  byte player;  // bit 0-2
+  byte code;    // bit 3-5
+  bool tries;   // bit 6
+  bool mode;    // bit 7
+  byte output;  // all 8 bits
+};
+
+typedef struct ledOut_t{
+  byte resLeds[4];
+  byte tryLeds[4];
+  byte plaLeds[4];
 };
 
 typedef struct timer_t{
@@ -38,10 +53,11 @@ typedef struct timer_t{
 
 typedef struct state_t{
   byte tries;
-  modeSel mode;
   byte bPos;
-  byte ledCol[2][4];
+  byte hPos;
   bool modeSwitch;
+  byte blinkLed[4]; // 0: off || 1: slow || 2: fast || 3: solid
+  modeSel mode;
 };
 
 Bounce bSel = Bounce();
@@ -49,7 +65,7 @@ Bounce bLft = Bounce();
 Bounce bRgt = Bounce();
 
 
-void setup(){
+void setup(){  
   pinMode(srData, OUTPUT);
   pinMode(srLatch, OUTPUT);
   pinMode(srClock, OUTPUT);
@@ -66,8 +82,8 @@ void setup(){
   Serial.begin(9600);
 }
 
-void loop(){
-  
+void loop(){  
+  ledOut_t history[0xF];
   timer_t timer;
   state_t state;
   initialize(timer);
@@ -75,50 +91,105 @@ void loop(){
   
   while(true){
     resetState(state);
-    resetLEDs(state);
-    gameLoop(state);
+    resetLEDs(history);
+    gameLoop(state, history);
   }
 }
 
-void gameLoop(state_t &s){
-  bool change = true;
+void gameLoop(state_t &s, ledOut_t *h){    
   while(s.mode != restart){
     switch(s.mode){
     case edit:
       Serial.println("mode: edit");
-      while(!s.modeSwitch){
-        if(change){
-          updateLEDs(s);
-          change = false;
-        }        
-        change = browseCol(s);        
-        if(getSelect()){
-          if(s.bPos == 4){
-            s.modeSwitch = true;
-          } else {
-            editCol(s);
-          }
-        }
-      }
-      s.mode = browse;
+      s.bPos = 0;
+      s.hPos = s.tries; 
+      modeEdit(s, h);
+      s.mode = (s.tries > 0) ? browse : commit;
       s.modeSwitch = false;
       break;
     case browse:
       Serial.println("mode: browse");
-      while(!s.modeSwitch){
-        // do stuff
-      }
+      modeBrowse(s, h);
+      s.modeSwitch = false;
       break;
     case commit:
       Serial.println("mode: commit");
-      while(!s.modeSwitch){
-        // do stuff
-      }
+      modeCommit(s, h);
+      s.modeSwitch = false;
       break;      
     }
     if(s.tries == 0xF){
       endGameLose();
       s.mode = restart;
+    }
+  }
+}
+
+void modeEdit(state_t &s, ledOut_t *h){
+  bool change = true;
+    
+  while(!s.modeSwitch){
+    if(change){
+      updateLEDs(s, h);
+      change = false;
+    }        
+    change = browseColumn(s);        
+    if(getSelect()){
+      if(s.bPos == 4){
+        s.modeSwitch = true;
+      } else {
+        editColor(s, h);
+      }
+    }
+  }
+}
+
+void modeBrowse(state_t &s, ledOut_t *h){  
+  bool change = true;
+  ledOut_t ht;
+  s.hPos = s.tries;
+  
+  while(!s.modeSwitch){
+    if(change){
+      updateLEDs(s, h);
+      change = false;
+    }
+    if(getLeft()){
+      if(s.hPos > 0){
+        s.hPos--;
+        change = true;        
+      }
+    }
+    if(getRight()){
+      if(s.hPos < s.tries){
+        s.hPos++;
+        change = true;
+      }
+    }
+    if(getSelect()){
+      if(s.hPos != s.tries){
+        s.mode = edit;
+        s.modeSwitch = true;
+      } else {
+        s.mode = commit;
+        s.modeSwitch = true;
+      }         
+    }
+  }
+}
+
+void modeCommit(state_t &s, ledOut_t *h){
+  while(!s.modeSwitch){
+    if(getRight() && s.tries > 0){
+      s.mode = browse;
+      s.modeSwitch = true;
+    }
+    if(getSelect()){
+      // get result
+      s.tries++;
+      newTry(s.tries, h);
+      s.mode = edit;
+      s.modeSwitch = true;
     }
   }
 }
