@@ -193,4 +193,3 @@ void modeCommit(state_t &s, ledOut_t *h){
     }
   }
 }
-
