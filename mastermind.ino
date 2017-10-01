@@ -64,6 +64,7 @@ Bounce bSel = Bounce();
 Bounce bLft = Bounce();
 Bounce bRgt = Bounce();
 
+// ******************************** Arduino Functions *********************
 
 void setup(){  
   pinMode(srData, OUTPUT);
@@ -86,7 +87,7 @@ void loop(){
   ledOut_t history[0xF];
   timer_t timer;
   state_t state;
-  initialize(timer);
+  initialize(timer, 1000);
   resetState(state);
   
   while(true){
@@ -95,6 +96,8 @@ void loop(){
     gameLoop(state, history);
   }
 }
+
+// ******************************** Main Logic ****************************
 
 void gameLoop(state_t &s, ledOut_t *h){    
   while(s.mode != restart){
@@ -134,7 +137,7 @@ void modeEdit(state_t &s, ledOut_t *h){
       change = false;
     }        
     change = browseColumn(s);        
-    if(getSelect()){
+    if(getButton(bSel)){
       if(s.bPos == 4){
         s.modeSwitch = true;
       } else {
@@ -154,19 +157,19 @@ void modeBrowse(state_t &s, ledOut_t *h){
       updateLEDs(s, h);
       change = false;
     }
-    if(getLeft()){
+    if(getButton(bLft)){
       if(s.hPos > 0){
         s.hPos--;
         change = true;        
       }
     }
-    if(getRight()){
+    if(getButton(bRgt)){
       if(s.hPos < s.tries){
         s.hPos++;
         change = true;
       }
     }
-    if(getSelect()){
+    if(getButton(bSel)){
       if(s.hPos != s.tries){
         s.mode = edit;
         s.modeSwitch = true;
@@ -180,11 +183,11 @@ void modeBrowse(state_t &s, ledOut_t *h){
 
 void modeCommit(state_t &s, ledOut_t *h){
   while(!s.modeSwitch){
-    if(getRight() && s.tries > 0){
+    if(getButton(bRgt) && s.tries > 0){
       s.mode = browse;
       s.modeSwitch = true;
     }
-    if(getSelect()){
+    if(getButton(bSel)){
       // get result
       s.tries++;
       newTry(s.tries, h);
@@ -192,4 +195,103 @@ void modeCommit(state_t &s, ledOut_t *h){
       s.modeSwitch = true;
     }
   }
+}
+
+// ******************************** In/Out ********************************
+
+// Set column to edit
+bool browseColumn(state_t &s){  
+  if(getButton(bRgt) && s.bPos < 4){
+    s.bPos++;
+    return true;        
+  }
+  if(getButton(bLft) && s.bPos > 0){
+    s.bPos--;
+    return true;
+  }
+  return false;
+}
+
+// Set player color choice on selected column
+void editColor(state_t &s, ledOut_t *edit){
+  bool change = true;
+  
+  while(!getButton(bSel)){
+    if(change){
+      updateLEDs(s, edit);
+      change = false;
+    }
+    if(getButton(bRgt) && edit[s.tries].plaLeds[s.bPos] < 5){
+      edit[s.tries].plaLeds[s.bPos]++;
+      change = true;
+    }
+    if(getButton(bLft) && edit[s.tries].plaLeds[s.bPos] > 0){
+      edit[s.tries].plaLeds[s.bPos]--;
+      change = true;
+    }
+  }
+}
+
+// get if button have been pressed
+bool getButton(Bounce b){  
+  if(b.update() && b.read() == LOW){    
+    return true;
+  }
+  return false;
+}
+
+void updateLEDs(state_t &s, ledOut_t *out){  
+  byte strSize = 60;
+  char strPlayerOut[strSize];
+  char strResultOut[strSize];
+  byte t = s.hPos;
+
+  snprintf(strResultOut, strSize, "Result: Try: %02d * ledCol[1] - %d *  %d *  %d *  %d\n", 
+    t, out[t].resLeds[0], out[t].resLeds[1], out[t].resLeds[2], out[t].resLeds[3]); 
+  snprintf(strPlayerOut, strSize, "Player: bPos: %d * ledCol[0] - %d *  %d *  %d *  %d\n", 
+    s.bPos, out[t].plaLeds[0], out[t].plaLeds[1], out[t].plaLeds[2], out[t].plaLeds[3]);
+  Serial.print(strResultOut);
+  Serial.print(strPlayerOut);  
+}
+
+// ******************************** Chores ********************************
+
+void initialize(timer_t &t, uint32_t freq){  
+  t.oldTime = millis();
+  t.newTime = t.oldTime;
+  t.intervalMS = freq;
+}
+
+void resetState(state_t &s){  
+  s.tries = 0;
+  s.mode = edit;
+  s.bPos = 0;
+  s.modeSwitch = false;
+}
+
+void resetLEDs(ledOut_t *h){  
+  for(int x = 0; x < 0xF; x++){
+    for(int i = 0; i < 4; i++){
+      h[x].resLeds[i] = 0;
+      h[x].plaLeds[i] = 0;
+    }
+  }
+}
+
+void newTry(byte pos, ledOut_t *h){
+  for(byte i = 0; i < 4; i++){
+    h[pos].plaLeds[i] = h[pos - 1].plaLeds[i]; 
+  }
+}
+
+void popHistory(){
+  // read from history
+}
+
+void endGameWin(){
+  // lightshow when winning
+}
+
+void endGameLose(){
+  // lightshow when loosing
 }
