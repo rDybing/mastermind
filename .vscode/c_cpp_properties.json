@@ -4,7 +4,6 @@
             "name": "Win32",
             "includePath": [
                 "C:\\Users\\Slark\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.6.20\\cores\\arduino",
-                "C:\\Users\\Slark\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\avr-gcc\\4.9.2-atmel3.5.4-arduino2\\avr\\include",
                 "E:\\Google Drive\\Arduino_Projects\\libraries\\Bounce2"
             ],
             "browse": {
@@ -12,7 +11,8 @@
                 "path": [
                     "C:\\Users\\Slark\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.6.20\\cores\\arduino",
                     "${workspaceRoot}",
-                    "E:\\Google Drive\\Arduino_Projects\\libraries\\Bounce2"
+                    "E:\\Google Drive\\Arduino_Projects\\libraries\\Bounce2",
+                    "C:\\Users\\Slark\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\avr-gcc\\4.9.2-atmel3.5.4-arduino2\\avr\\include"
                 ]
             },
             "intelliSenseMode": "msvc-x64"

@@ -17,7 +17,7 @@ const byte srClock = 13;
 const byte srCC[4] = {2, 3, 4, 5};
 const byte bPinSel = 8;
 const byte bPinLft = 7;
-const byte bPinRgt = 6;
+const byte bPinRgt = 6; 
 
 enum modeSel {edit, browse, commit, restart};
 
